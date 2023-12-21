@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { usePokemon } from "@/hooks/usePokemon";
 import { cn, elementType, stats } from "@/lib/utils";
+import { EyeOffIcon } from "lucide-react";
 import { TypeBadge } from "@/components/type-badge";
-import { ChevronLeftIcon, EyeOffIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Pokemon } from "@/types/pokemon";
-import { useQueryState } from "next-usequerystate";
+import { useSpecies } from "@/hooks/useSpecies";
+import { useEvolution } from "@/hooks/useEvolution";
+import { PokemonNavigation } from "@/components/selected-navigation";
+import { PokemonEvolution } from "@/components/selected-evolution";
 
 export const SelectedPokemon = ({
   selected,
@@ -18,7 +20,9 @@ export const SelectedPokemon = ({
   handle?: boolean;
   className?: string;
 }) => {
-  const { data, isLoading } = usePokemon(selected);
+  const { data: pokemon, isLoading } = usePokemon(selected);
+  const { data: species, isLoading: speciesIsLoading } = useSpecies(pokemon?.species.url ?? "");
+  const { data: evolution, isLoading: evolutionIsLoading } = useEvolution(species?.evolution_chain.url ?? "");
 
   return (
     <div
@@ -29,7 +33,7 @@ export const SelectedPokemon = ({
       )}
     >
       {/*Top image/background*/}
-      <div className="relative w-full h-72 pointer-events-none">
+      <div className="relative w-full h-64 pointer-events-none">
         {handle && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full w-24 h-1.5 z-40 bg-white/70" />
         )}
@@ -37,39 +41,39 @@ export const SelectedPokemon = ({
           className="absolute bottom-14 left-1/2 -translate-x-1/2 w-[calc(175%)] aspect-square rounded-full"
           style={{
             background: `linear-gradient(130deg, ${
-              data?.types[0].type.name ? elementType[data.types[0].type.name] : "#fcfcfc"
+              pokemon?.types[0].type.name ? elementType[pokemon.types[0].type.name] : "#fcfcfc"
             } 60%, rgba(255,255,255,1) 100%)`,
           }}
         />
         <Image
           className="absolute left-1/2 top-[40%] -translate-y-1/2 -translate-x-1/2"
           style={{ maskImage: "linear-gradient(130deg, rgba(0,0,0,.6), rgba(0,0,0,0))" }}
-          src={`./assets/elements/${data?.types[0].type.name ?? "normal"}.svg`}
+          src={`./assets/elements/${pokemon?.types[0].type.name ?? "normal"}.svg`}
           alt="Element Type"
-          width={200}
-          height={200}
+          width={150}
+          height={150}
         />
         <Image
           className="absolute bottom-0 left-1/2 -translate-x-1/2"
           src={
-            data?.sprites.other?.home.front_default ??
-            data?.sprites.other?.["official-artwork"].front_default ??
+            pokemon?.sprites.other?.home.front_default ??
+            pokemon?.sprites.other?.["official-artwork"].front_default ??
             "/assets/fallback.svg"
           }
-          alt={data?.name ?? "pokemon"}
-          width={250}
-          height={250}
+          alt={pokemon?.name ?? "pokemon"}
+          width={225}
+          height={225}
         />
       </div>
 
       {/*Content*/}
-      <div className="flex flex-col items-center gap-4 p-8 pt-4">
+      <div className="relative flex flex-col items-center gap-4 p-8 pt-4 overflow-y-scroll [&::-webkit-scrollbar]:hidden h-[calc(100%-24rem)]">
         {/*Number*/}
         {isLoading ? (
           <Skeleton className="w-12 h-4" />
         ) : (
           <span className="font-medium capitalize text-zinc-500 text-sm -mb-4">
-            Nº{data?.id.toString().padStart(3, "0")}
+            Nº{pokemon?.id.toString().padStart(3, "0")}
           </span>
         )}
 
@@ -77,7 +81,7 @@ export const SelectedPokemon = ({
         {isLoading ? (
           <Skeleton className="w-64 h-6" />
         ) : (
-          <h2 className="font-black capitalize text-2xl">{data?.name}</h2>
+          <h2 className="font-black capitalize text-2xl">{pokemon?.name}</h2>
         )}
 
         {/*Element types*/}
@@ -88,11 +92,28 @@ export const SelectedPokemon = ({
               <Skeleton className="w-24 h-8" />
             </>
           )}
-          {data?.types.map((type, index) => (
+          {pokemon?.types.map((type, index) => (
             <TypeBadge key={index} type={type.type.name}>
               {type.type.name}
             </TypeBadge>
           ))}
+        </div>
+
+        {/*Pokédex Entry*/}
+        <div className="w-full flex flex-col gap-2 items-center">
+          <h2 className="font-black text-sm text-center">POKÉDEX ENTRY</h2>
+          {speciesIsLoading ? (
+            <>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-1/2" />
+            </>
+          ) : (
+            <p className="text-center text-sm">
+              {species?.flavor_text_entries
+                .find((entry) => entry.language.name === "en")
+                ?.flavor_text.replaceAll("\f", " ")}
+            </p>
+          )}
         </div>
 
         {/*Abilities*/}
@@ -105,11 +126,11 @@ export const SelectedPokemon = ({
                 <Skeleton className="h-10 rounded-full" />
               </>
             )}
-            {data?.abilities.map((ability, index) =>
+            {pokemon?.abilities.map((ability, index) =>
               ability.is_hidden ? (
                 <div
                   key={index}
-                  className="flex items-center justify-center gap-2 rounded-full bg-elements py-2 text-center w-full capitalize ring-1 ring-red-300"
+                  className="flex items-center justify-center gap-2 rounded-full bg-elements py-1.5 text-center w-full capitalize ring-1 ring-red-300"
                 >
                   <span>{ability.ability.name}</span>
                   <EyeOffIcon className="w-6 h-6 text-gray-400" />
@@ -117,7 +138,7 @@ export const SelectedPokemon = ({
               ) : (
                 <div
                   key={index}
-                  className="rounded-full bg-elements py-2 text-center w-full capitalize ring-1 ring-blue-200"
+                  className="rounded-full bg-elements py-1.5 text-center w-full capitalize ring-1 ring-blue-200"
                 >
                   <span>{ability.ability.name}</span>
                 </div>
@@ -134,7 +155,7 @@ export const SelectedPokemon = ({
               <Skeleton className="h-10 w-full rounded-full" />
             ) : (
               <div className="rounded-full bg-elements py-2 text-center w-full">
-                {data?.height ? `${data?.height / 10}m` : "??"}
+                {pokemon?.height ? `${pokemon?.height / 10}m` : "??"}
               </div>
             )}
           </div>
@@ -144,7 +165,7 @@ export const SelectedPokemon = ({
               <Skeleton className="h-10 w-full rounded-full" />
             ) : (
               <div className="rounded-full bg-elements py-2 text-center w-full">
-                {data?.weight ? `${data?.weight / 10}kg` : "??"}
+                {pokemon?.weight ? `${pokemon?.weight / 10}kg` : "??"}
               </div>
             )}
           </div>
@@ -163,7 +184,7 @@ export const SelectedPokemon = ({
             {isLoading ? (
               <Skeleton className="h-10 w-full rounded-full" />
             ) : (
-              <div className="rounded-full bg-elements py-2 text-center w-full">{data?.base_experience ?? "??"}</div>
+              <div className="rounded-full bg-elements py-2 text-center w-full">{pokemon?.base_experience ?? "??"}</div>
             )}
           </div>
         </div>
@@ -182,7 +203,7 @@ export const SelectedPokemon = ({
               </>
             ) : (
               <>
-                {data?.stats.map((stat, index) => (
+                {pokemon?.stats.map((stat, index) => (
                   <div key={index} className="flex flex-col items-center rounded-full bg-elements p-1 gap-1">
                     <div
                       className="rounded-full aspect-square p-1 min-w-8 flex items-center justify-center text-xs font-black text-white"
@@ -198,7 +219,7 @@ export const SelectedPokemon = ({
                     TOT
                   </div>
                   <span className="font-black text-sm pb-1.5">
-                    {data?.stats.reduce((sum, stat) => sum + stat.base_stat, 0)}
+                    {pokemon?.stats.reduce((sum, stat) => sum + stat.base_stat, 0)}
                   </span>
                 </div>
               </>
@@ -206,66 +227,21 @@ export const SelectedPokemon = ({
           </div>
         </div>
 
-        <div className="">
+        {/*Evolution*/}
+        <div className="w-full">
           <h2 className="font-black text-sm text-center">EVOLUTION</h2>
+          {!evolution ? (
+            <>
+              <Skeleton className="w-full h-16" />
+            </>
+          ) : (
+            <PokemonEvolution evolution={evolution.chain} />
+          )}
         </div>
-        {data && <PokemonNavigation selectedPokemon={data} />}
       </div>
-    </div>
-  );
-};
 
-const PokemonNavigation = ({ selectedPokemon }: { selectedPokemon: Pokemon }) => {
-  const { data: next } = usePokemon(selectedPokemon.id + 1);
-  const { data: previous } = usePokemon(selectedPokemon.id - 1);
-  const [selected, setSelected] = useQueryState("selected");
-
-  return (
-    <div className="absolute bottom-2 w-[calc(100%-1rem)] flex items-center justify-between rounded-2xl bg-gray-200">
-      <button
-        className="flex items-center justify-start w-1/2 gap-1 py-6 px-4 cursor-pointer"
-        onClick={() => setSelected(previous!.name)}
-      >
-        <ChevronLeftIcon className="w-5 h-5 text-gray-500" />
-        <Image
-          className=""
-          src={
-            previous?.sprites.other?.home.front_default ??
-            previous?.sprites.other?.["official-artwork"].front_default ??
-            "/assets/fallback.svg"
-          }
-          alt={previous?.name ?? "pokemon"}
-          width={35}
-          height={35}
-        />
-        <div className="flex flex-col items-start">
-          <span className="capitalize font-bold text-sm">{previous?.name}</span>
-          <span className="font-medium capitalize text-zinc-500 text-xs">
-            {previous && <>Nº{previous?.id.toString().padStart(3, "0")}</>}
-          </span>
-        </div>
-      </button>
-      <div className="h-6 w-[1px] bg-slate-800" />
-      <button className="flex items-center justify-end w-1/2 gap-1 py-6 px-4" onClick={() => setSelected(next!.name)}>
-        <div className="flex flex-col items-end">
-          <span className="font-medium capitalize text-zinc-500 text-xs">
-            {next && <>Nº{next?.id.toString().padStart(3, "0")}</>}
-          </span>
-          <span className="capitalize font-bold text-sm">{next?.name}</span>
-        </div>
-        <Image
-          className=""
-          src={
-            next?.sprites.other?.home.front_default ??
-            next?.sprites.other?.["official-artwork"].front_default ??
-            "/assets/fallback.svg"
-          }
-          alt={next?.name ?? "pokemon"}
-          width={35}
-          height={35}
-        />
-        <ChevronLeftIcon className="w-5 h-5 rotate-180 text-gray-500" />
-      </button>
+      {/*Navigation Panel*/}
+      {pokemon && <PokemonNavigation selectedPokemon={pokemon} />}
     </div>
   );
 };
