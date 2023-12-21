@@ -6,7 +6,7 @@ export const useEvolution = (evolution: string) => {
   return useQuery({
     queryKey: ["evolution", evolution],
     queryFn: async () => {
-      return (await axios.get<Evolution>(evolution)).data; //TODO type
+      return (await axios.get<Evolution>(evolution)).data;
     },
     enabled: !!evolution,
     staleTime: Infinity,

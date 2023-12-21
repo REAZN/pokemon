@@ -3,7 +3,6 @@ import Image from "next/image";
 import { TypeBadge } from "@/components/type-badge";
 import { cn, elementType } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SpeciesType } from "@/types/pokemon";
 
 export const PokemonCard = ({ pokemon, selected }: { pokemon: string; selected: string }) => {
   const { data, isLoading } = usePokemon(pokemon);

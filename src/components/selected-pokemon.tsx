@@ -10,6 +10,8 @@ import { useSpecies } from "@/hooks/useSpecies";
 import { useEvolution } from "@/hooks/useEvolution";
 import { PokemonNavigation } from "@/components/selected-navigation";
 import { PokemonEvolution } from "@/components/selected-evolution";
+import { PokemonWeakness } from "@/components/selected-weakness";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export const SelectedPokemon = ({
   selected,
@@ -128,13 +130,12 @@ export const SelectedPokemon = ({
             )}
             {pokemon?.abilities.map((ability, index) =>
               ability.is_hidden ? (
-                <div
-                  key={index}
-                  className="flex items-center justify-center gap-2 rounded-full bg-elements py-1.5 text-center w-full capitalize ring-1 ring-red-300"
-                >
-                  <span>{ability.ability.name}</span>
-                  <EyeOffIcon className="w-6 h-6 text-gray-400" />
-                </div>
+                <Tooltip content="Hidden" key={index}>
+                  <div className="flex items-center justify-center gap-2 rounded-full bg-elements py-1.5 text-center w-full capitalize ring-1 ring-red-300">
+                    <span>{ability.ability.name}</span>
+                    <EyeOffIcon className="w-6 h-6 text-gray-400" />
+                  </div>
+                </Tooltip>
               ) : (
                 <div
                   key={index}
@@ -176,7 +177,9 @@ export const SelectedPokemon = ({
             {isLoading ? (
               <Skeleton className="h-10 w-full rounded-full" />
             ) : (
-              <div className="rounded-full bg-elements py-2 text-center w-full">TODO</div>
+              <div className="rounded-full bg-elements p-2 flex gap-1 items-center justify-center w-full">
+                <PokemonWeakness type={pokemon?.types[0].type.url ?? ""} />
+              </div>
             )}
           </div>
           <div className="flex flex-col items-center gap-2 w-full">
@@ -194,34 +197,34 @@ export const SelectedPokemon = ({
           <h2 className="font-black text-sm text-center">STATS</h2>
           <div className="flex justify-between">
             {isLoading ? (
-              <>
-                {Array(7)
-                  .fill("")
-                  .map((_, index) => (
-                    <Skeleton key={index} className="h-16 w-10 rounded-full" />
-                  ))}
-              </>
+              Array(7)
+                .fill("")
+                .map((_, index) => <Skeleton key={index} className="h-16 w-10 rounded-full" />)
             ) : (
               <>
                 {pokemon?.stats.map((stat, index) => (
-                  <div key={index} className="flex flex-col items-center rounded-full bg-elements p-1 gap-1">
-                    <div
-                      className="rounded-full aspect-square p-1 min-w-8 flex items-center justify-center text-xs font-black text-white"
-                      style={{ backgroundColor: stats[stat.stat.name].color }}
-                    >
-                      {stats[stat.stat.name].acronym}
+                  <Tooltip key={index} content={stat.stat.name}>
+                    <div className="flex flex-col items-center rounded-full bg-elements p-1 gap-1">
+                      <div
+                        className="rounded-full aspect-square p-1 min-w-8 flex items-center justify-center text-xs font-black text-white"
+                        style={{ backgroundColor: stats[stat.stat.name].color }}
+                      >
+                        {stats[stat.stat.name].acronym}
+                      </div>
+                      <span className="font-black text-sm pb-1.5">{stat.base_stat}</span>
                     </div>
-                    <span className="font-black text-sm pb-1.5">{stat.base_stat}</span>
-                  </div>
+                  </Tooltip>
                 ))}
-                <div className="flex flex-col items-center rounded-full bg-blue-200 p-1 gap-1">
-                  <div className="rounded-full aspect-square p-1 min-w-8 flex items-center justify-center text-xs font-black text-white bg-blue-500">
-                    TOT
+                <Tooltip content="Total">
+                  <div className="flex flex-col items-center rounded-full bg-blue-200 p-1 gap-1">
+                    <div className="rounded-full aspect-square p-1 min-w-8 flex items-center justify-center text-xs font-black text-white bg-blue-500">
+                      TOT
+                    </div>
+                    <span className="font-black text-sm pb-1.5">
+                      {pokemon?.stats.reduce((sum, stat) => sum + stat.base_stat, 0)}
+                    </span>
                   </div>
-                  <span className="font-black text-sm pb-1.5">
-                    {pokemon?.stats.reduce((sum, stat) => sum + stat.base_stat, 0)}
-                  </span>
-                </div>
+                </Tooltip>
               </>
             )}
           </div>
