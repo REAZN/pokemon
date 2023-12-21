@@ -54,14 +54,14 @@ export default function Home() {
             {isLoading ? (
               Array(15)
                 .fill("")
-                .map((_, index) => <Skeleton key={index} className="rounded-3xl min-w-52 w-full h-64" />)
+                .map((_, index) => <Skeleton key={index} className="bg-foreground rounded-3xl min-w-52 w-full h-64" />)
             ) : (
               <>
                 {data?.pages.map((group, index) =>
                   group.results.map((pokemon, index) => (
                     <Drawer.Root key={index} open={!desktop && undefined}>
                       <Drawer.Trigger onClick={() => setSelected(pokemon.name)}>
-                        <PokemonCard pokemon={pokemon.name} />
+                        <PokemonCard pokemon={pokemon.name} selected={selected ?? ""} />
                       </Drawer.Trigger>
                       <Drawer.Portal>
                         <Drawer.Overlay className="fixed z-30 inset-0 bg-black/40" />
@@ -78,7 +78,7 @@ export default function Home() {
           <button
             onClick={() => fetchNextPage()}
             ref={ref}
-            className="w-full bg-foreground shadow-poke rounded-lg py-2 my-4 font-bold hover:brightness-125"
+            className="w-full border shadow-poke rounded-lg py-2 my-4 font-bold hover:brightness-125"
           >
             Load more
           </button>
